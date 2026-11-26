@@ -1,160 +1,148 @@
-# Fastify Prisma Zod API
+# poc-fastify-prisma-zod-swagger
 
-This is a RESTful API boilerplate built with Fastify, Prisma, Zod, and TypeScript. It features a modern, modular, and fully type-safe architecture, complete with a comprehensive automated test suite.
+> A high-performance REST API engine built on Fastify 5, Prisma ORM 7 with PostgreSQL, runtime schema validation via Zod, and auto-generated Swagger UI OpenAPI documentation.
 
-This project has been refactored to follow a **Route-Controller-Service** pattern, ensuring a clean separation of concerns and making it highly scalable and maintainable.
+**Inception (First Commit):** `2023-01-07` • **Batch / Horizon:** `batch-2023` • **Architecture Domain:** `Modern REST Engine / Fastify & Prisma ORM`
 
-## Features
+---
 
-* **Modern Framework:** Built on [Fastify](https://fastify.dev/) for high performance and low overhead.
+## 📌 Architecture & Overview
 
-* **Type-Safe ORM:** Uses [Prisma v7](https://www.prisma.io/) with **PostgreSQL Driver Adapters** (`@prisma/adapter-pg`) for optimized database connectivity and better performance.
+`fastify-prisma-zod-swagger` is an enterprise-grade backend architecture blueprint showcasing end-to-end type safety, high-throughput request serialization, and automated documentation generation. Operating on Fastify 5 and Prisma ORM 7, it leverages `fastify-type-provider-zod` to infer static TypeScript types directly from runtime validation schemas.
 
-* **End-to-End Type Safety:** Leverages [Zod](https://zod.dev/) for schema validation and automatic type inference, eliminating the need for manual type definitions.
+The service is structured modularly: controllers, route definitions, schemas, and services are decoupled across domain boundaries (`user`, `product`), while infrastructure plugins (`prisma`, `swagger`, `jwt`, `helmet`, `rate-limit`) are encapsulated using `fastify-plugin`. Graceful shutdown handling is orchestrated via `close-with-grace`.
 
-* **Advanced Security:** Integrated [Helmet](https://github.com/fastify/fastify-helmet) for secure headers and [Rate Limit](https://github.com/fastify/fastify-rate-limit) to prevent brute-force attacks.
+```
+                              +-----------------------------------------------+
+                              |          fastify-prisma-zod-swagger           |
+                              |                 (Port: 3000)                  |
+                              |                                               |
+[ Client / Swagger UI ]       |  +--------------------+                       |
+       |                      |  | Helmet & RateLimit |                       |
+       | HTTP (Bearer JWT)    |  +---------+----------+                       |
+       v                      |            |                                  |
++---------------------------+ |  +---------v----------+                       |
+| Fastify 5 Engine          +-+->+ Swagger UI (/docs) |                       |
+| (Zod Type Provider)       | |  +---------+----------+                       |
++---------------------------+ |            |                                  |
+                              |            v                                  |
+                              |  +--------------------+                       |
+                              |  | Zod Validator &    |                       |
+                              |  | SerializerCompiler |                       |
+                              |  +---------+----------+                       |
+                              |            |                                  |
+                              |            v                                  |
+                              |  +--------------------+                       |
+                              |  | Domain Routers     |                       |
+                              |  | (User & Product)   |                       |
+                              |  +---------+----------+                       |
+                              |            |                                  |
+                              |            v                                  |
+                              |  +--------------------+  +------------------+ |
+                              |  | Prisma 7 Client    |->| PostgreSQL DB    | |
+                              |  | (@prisma/client)   |  | (Docker Compose) | |
+                              |  +--------------------+  +------------------+ |
+                              +-----------------------------------------------+
+```
 
-* **Operational Excellence:** Implemented **Graceful Shutdown** using `close-with-grace` and `forceCloseConnections`, ensuring no requests are lost and database connections are closed cleanly during restarts or deployments.
+* **Context:** Modern, production-ready REST API reference template engineered to evaluate Fastify's schema compilation capabilities, automated OpenAPI specification generation, and Prisma 7 PostgreSQL integration.
+* **Key Patterns:**
+  * **Unified Type Provider:** Single-source schema contracts with Zod powering runtime body validation, response serialization, and TypeScript compile-time type inference.
+  * **Automated OpenAPI Generation:** Dynamic schema generation via `@fastify/swagger` and `@fastify/swagger-ui` using `jsonSchemaTransform`.
+  * **Encapsulated Dependency Injection:** Decorating Fastify server instances with Prisma and authentication helpers via `fastify-plugin`.
+  * **Graceful Lifecycle Teardown:** Automated connection termination and process cleanup with `close-with-grace`.
 
-* **API Documentation:** Automatically generates OpenAPI (Swagger) documentation using **Zod 4** native JSON Schema generation for perfect model accuracy.
+---
 
-* **Continuous Integration:** Pre-configured GitHub Actions workflow for automated testing on every push and pull request.
+## 🛠 Tech Stack
 
-## Getting Started
+* **Runtime & Framework:** Node.js (>= 20), Fastify 5.8.5, TypeScript 5.x
+* **Database & ORM:** PostgreSQL 15, Prisma ORM 7.7.0 (`@prisma/client`, `@prisma/adapter-pg`)
+* **Validation & Types:** Zod 3.x, `fastify-type-provider-zod`
+* **API Documentation:** `@fastify/swagger` 9.7.0, `@fastify/swagger-ui` 5.2.5
+* **Security & Auth:** `@fastify/jwt` 10.0.0, `@fastify/helmet` 13.0.2, `@fastify/rate-limit` 10.3.0, `bcrypt` 6.0.0
+* **Lifecycle & Tooling:** `close-with-grace` 2.5.0, Docker Compose, Vitest / Jest, Postman Collections
 
-Follow these instructions to get a copy of the project up and running on your local machine for development and testing purposes.
+---
+
+## ✨ Features & Endpoints
+
+* **User Management & Authentication:** Password hashing using bcrypt, credential verification, and JWT session token generation.
+* **Product Catalog Service:** Authenticated creation and unauthenticated querying of product inventory.
+* **Interactive OpenAPI Explorer:** Live Swagger UI documentation with executable request testing at `/docs`.
+* **Containerized Infrastructure:** Full `docker-compose.yml` provisioning PostgreSQL with persistent volume mounts.
+
+### Key API Routes / Interfaces
+
+| Method | Route | Auth | Description |
+|---|---|---|---|
+| `GET` | `/docs` | Public | Interactive Swagger UI OpenAPI documentation. |
+| `POST` | `/api/users` | Public | Register new user with validated email and password. |
+| `POST` | `/api/users/login` | Public | Authenticate credentials and return signed JWT. |
+| `GET` | `/api/users` | Protected | Retrieve list of registered users (passwords omitted). |
+| `POST` | `/api/products` | Protected | Create a new product entry assigned to the authenticated user. |
+| `GET` | `/api/products` | Public | Retrieve catalog of all active products. |
+
+---
+
+## 🚀 Getting Started
 
 ### Prerequisites
 
-You need to have the following software installed on your machine:
+* Node.js `>= 20.0.0`
+* Docker & Docker Compose
+* pnpm (`npm install -g pnpm`)
 
-* [Node.js](https://nodejs.org/) (v24.x or later recommended)
-
-* [Docker](https://www.docker.com/) and Docker Compose
-
-### Local Setup
-
-1. **Clone the repository:**
-
-   ```bash
-   git clone https://github.com/fabogit/fastify-prisma-zod-swagger.git
-   ```
-
-2. **Create the environment file:**
-   Create a file named `.env` in the root of the project and paste the following content. Adjust the values if necessary.
-
-   ```env
-   # Database Connection String
-   DATABASE_URL="postgresql://postgres:changeme@localhost:5432/test-database?schema=public"
-
-   # JWT Configuration
-   JWT_SECRET="your-super-secret-key-for-development"
-
-   # Server Port
-   PORT=3000
-
-   # CORS Configuration
-   CORS_ORIGIN="http://localhost:3000"
-   ```
-
-3. **Install dependencies:**
-
-   ```bash
-   pnpm install
-   ```
-
-4. **Start the database container:**
-   This command will start a PostgreSQL database in a Docker container.
-
-   ```bash
-   docker-compose up -d
-   ```
-
-5. **Apply database schema:**
-   This command reads your `prisma/schema.prisma` file and applies it to the database, creating all the necessary tables.
-
-   ```bash
-   pnpm prisma db push
-   ```
-
-   You only need to run this command the first time or after you make changes to the `schema.prisma` file.
-
-## Running the Application
-
-### Development Mode
-
-To start the server in development mode with hot-reloading, run:
+### Installation
 
 ```bash
+# Clone the repository
+git clone https://github.com/fabogit/poc-fastify-prisma-zod-swagger.git
+cd poc-fastify-prisma-zod-swagger
+
+# Install dependencies
+pnpm install
+```
+
+### Environment Configuration
+
+Create a `.env` file based on your local setup:
+
+```env
+PORT=3000
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/fastify_db?schema=public"
+JWT_SECRET="super-secret-jwt-key"
+```
+
+### Running External Database
+
+```bash
+# Start PostgreSQL database container
+docker compose up -d
+```
+
+### Database Migration
+
+```bash
+# Apply Prisma schema migrations
+npx prisma migrate dev
+```
+
+### Running the Application
+
+```bash
+# Development mode with live reload
 pnpm run dev
-```
 
-The server will start and listen on the port defined in your `.env` file (e.g., `http://localhost:3000`).
-
-## Running Tests
-
-This project has a comprehensive test suite using Vitest.
-
-* **Run all tests once:**
-  This is ideal for CI environments or a final check.
-
-  ```bash
-  pnpm test
-  ```
-
-* **Run tests in watch mode:**
-  This will automatically re-run the tests every time you save a file.
-
-  ```bash
-  pnpm run test:watch
-  ```
-
-## Building for Production
-
-This project uses `pnpm` and `tsx` for development, but for production, you should compile the TypeScript code to JavaScript. The `build` script is configured to clean the `dist` folder and compile using `tsc`.
-
-```bash
+# Production build and execution
 pnpm run build
+pnpm run start
 ```
 
-The compiled code will be available in the `dist` folder.
+Navigate to [http://localhost:3000/docs](http://localhost:3000/docs) for the Swagger API documentation.
 
-## Docker Deployment
+---
 
-The repository includes a highly optimized multi-stage `dockerfile` that handles native modules (like `bcrypt`) and Prisma client generation securely.
+## 📄 License & Author
 
-To build and run the entire application using Docker:
-
-1. **Build the image:**
-
-   ```bash
-   docker build -t fastify-prisma-zod-app .
-   ```
-
-2. **Run the container:**
-   Ensure your database is running and accessible.
-
-   ```bash
-   docker run -p 3000:3000 --env-file .env fastify-prisma-zod-app
-   ```
-
-Alternatively, you can incorporate the app into a `docker-compose.yml` for a full stack deployment.
-
-## API Documentation
-
-Once the server is running, you can access the automatically generated API documentation (Swagger UI) at:
-[http://localhost:3000/docs](http://localhost:3000/docs)
-
-### Database Management
-
-The project uses a centralized `PrismaClient` instance located in `src/db.ts`. This ensures a single connection pool is shared across the entire application, which is critical for performance and avoiding "too many connections" errors.
-
-The Prisma Client is generated into `src/generated/client` to provide better control over the build process and ensure consistency across environments.
-
-### Graceful Shutdown
-
-To ensure production stability, the application uses `close-with-grace`. When a termination signal (`SIGTERM`, `SIGINT`) is received, the server:
-1. Triggers the graceful shutdown sequence.
-2. Closes the Fastify server (immediately terminating idle keep-alive connections).
-3. Closes the database connection pool cleanly.
-4. Exits the process once all resources are freed.
+Developed by [@fabogit](https://github.com/fabogit).
