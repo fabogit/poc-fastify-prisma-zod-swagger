@@ -47,7 +47,7 @@
   "keywords": [],
   "license": "ISC",
   "main": "dist/index.js",
-  "name": "fastify-prisma-zod-swagger",
+  "name": "poc-fastify-prisma-zod-swagger",
   "packageManager": "pnpm@10.28.0",
   "pnpm": {
     "onlyBuiltDependencies": [
